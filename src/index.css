@@ -1,0 +1,31 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;700&family=Inter:wght@400;500;600;700&display=swap');
+
+@theme {
+  --color-primary: #2563EB;
+  --color-on-primary: #FFFFFF;
+  --color-accent: #059669;
+  --color-destructive: #DC2626;
+  --color-bg: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-fg: #0F172A;
+  --color-muted: #F1F5FD;
+  --color-border: #E4ECFC;
+  --color-ring: #2563EB;
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-serif: 'Cormorant Garamond', Georgia, serif;
+
+  --transition-duration-120: 120ms;
+}
+
+@layer base {
+  html { font-family: var(--font-sans); }
+  body { background-color: var(--color-bg); color: var(--color-fg); }
+  h1, h2, h3 { font-family: var(--font-serif); }
+  .tabular { font-feature-settings: 'tnum'; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
