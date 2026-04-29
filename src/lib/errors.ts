@@ -19,9 +19,19 @@ export function mapErrorToMessage(code?: string | null): string {
   return messages[code] ?? 'Ocurrió un error inesperado.'
 }
 
+type GqlErrArray = Array<{ extensions?: { code?: string } }>
+
 export function extractErrorCode(error: unknown): string | undefined {
   if (typeof error !== 'object' || !error) return undefined
   const e = error as Record<string, unknown>
-  const gqlErrors = e['graphQLErrors'] as Array<{ extensions?: { code?: string } }> | undefined
-  return gqlErrors?.[0]?.extensions?.code
+  // Apollo v3: ApolloError.graphQLErrors
+  const v3 = e['graphQLErrors'] as GqlErrArray | undefined
+  if (v3?.[0]?.extensions?.code) return v3[0].extensions?.code
+  // Apollo v4: CombinedGraphQLErrors.errors
+  const v4 = e['errors'] as GqlErrArray | undefined
+  if (v4?.[0]?.extensions?.code) return v4[0].extensions?.code
+  // Nested in cause
+  const cause = e['cause'] as Record<string, unknown> | undefined
+  const causeV4 = cause?.['errors'] as GqlErrArray | undefined
+  return causeV4?.[0]?.extensions?.code
 }
