@@ -43,8 +43,10 @@ describe('LoginPage', () => {
   })
 
   it('shows mapped error message on invalid credentials', async () => {
+    // Apollo v4: MutateResult.error is a CombinedGraphQLErrors-like object with .errors[]
     mockMutate.mockResolvedValue({
-      errors: [{ message: 'Invalid', extensions: { code: 'INVALID_CREDENTIALS' } }],
+      data: null,
+      error: { errors: [{ message: 'Invalid', extensions: { code: 'INVALID_CREDENTIALS' } }] },
     })
     renderLogin()
     await userEvent.type(screen.getByLabelText(/correo/i), 'ana@example.com')

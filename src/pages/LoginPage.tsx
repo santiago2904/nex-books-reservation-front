@@ -46,8 +46,8 @@ export function LoginPage() {
     try {
       const res = await loginMutation({ variables: { input: data } })
       // Apollo v4 may return errors in result instead of throwing
-      if (res.errors?.length) { handleError(res); return }
-      const { accessToken, user } = res.data.login
+      if (res.error) { handleError(res.error); return }
+      const { accessToken, user } = (res.data as { login: { accessToken: string; user: import('@/auth/AuthContext').AuthUser } }).login
       auth.login(accessToken, user)
       const from = params.get('from') ?? '/'
       nav(from, { replace: true })

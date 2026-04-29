@@ -42,7 +42,13 @@ export function RegisterPage() {
   const onSubmit = async (data: Form) => {
     try {
       const res = await registerMutation({ variables: { input: data } })
-      const { accessToken, user } = res.data.register
+      if (res.error) {
+        const msg = mapErrorToMessage(extractErrorCode(res.error))
+        setError('root', { message: msg })
+        toast.push('error', msg)
+        return
+      }
+      const { accessToken, user } = (res.data as { register: { accessToken: string; user: import('@/auth/AuthContext').AuthUser } }).register
       auth.login(accessToken, user)
       nav('/', { replace: true })
     } catch (e) {
