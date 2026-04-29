@@ -1,13 +1,41 @@
+import { Route, Routes } from 'react-router-dom'
+import { AppShell } from '@/components/layout/AppShell'
+import { ProtectedRoute } from '@/auth/ProtectedRoute'
+import { LoginPage } from '@/pages/LoginPage'
+import { RegisterPage } from '@/pages/RegisterPage'
+import { BooksListPage } from '@/pages/BooksListPage'
+import { BookDetailPage } from '@/pages/BookDetailPage'
+import { MyReservationsPage } from '@/pages/MyReservationsPage'
+import { BooksManagePage } from '@/pages/admin/BooksManagePage'
+import { BookFormPage } from '@/pages/admin/BookFormPage'
+import { ReservationsPage } from '@/pages/admin/ReservationsPage'
+import { CreateUserPage } from '@/pages/admin/CreateUserPage'
+import { NotFoundPage } from '@/pages/NotFoundPage'
+
 export default function App() {
   return (
-    <main className="min-h-screen flex items-center justify-center p-8">
-      <div className="bg-surface border border-border rounded-lg p-8 max-w-md">
-        <h1 className="text-3xl mb-2">Nex Books</h1>
-        <p className="text-fg/80 mb-4">Tailwind + tokens working.</p>
-        <button className="bg-primary text-on-primary px-4 py-2 rounded transition-transform duration-120 active:scale-[0.97] cursor-pointer">
-          Primary CTA
-        </button>
-      </div>
-    </main>
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+
+      <Route element={<AppShell />}>
+        <Route path="/" element={<BooksListPage />} />
+        <Route path="/books/:id" element={<BookDetailPage />} />
+
+        <Route element={<ProtectedRoute role="USER" />}>
+          <Route path="/my-reservations" element={<MyReservationsPage />} />
+        </Route>
+
+        <Route element={<ProtectedRoute role="ADMIN" />}>
+          <Route path="/admin/books" element={<BooksManagePage />} />
+          <Route path="/admin/books/new" element={<BookFormPage />} />
+          <Route path="/admin/books/:id/edit" element={<BookFormPage />} />
+          <Route path="/admin/reservations" element={<ReservationsPage />} />
+          <Route path="/admin/users/new" element={<CreateUserPage />} />
+        </Route>
+      </Route>
+
+      <Route path="*" element={<NotFoundPage />} />
+    </Routes>
   )
 }
