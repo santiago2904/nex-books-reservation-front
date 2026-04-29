@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { gql } from '@apollo/client'
 import { useQuery } from '@apollo/client/react'
 import { useParams, Link } from 'react-router-dom'
 import { AvailabilityBadge } from '@/components/books/AvailabilityBadge'
+import { ReserveBookModal } from '@/components/books/ReserveBookModal'
 import { Button, Skeleton } from '@/components/ui'
 import { useAuth } from '@/auth/useAuth'
 
@@ -54,6 +56,7 @@ export function BookDetailPage() {
   }
 
   const book = data.book
+  const [reserveOpen, setReserveOpen] = useState(false)
 
   return (
     <section className="max-w-2xl">
@@ -67,8 +70,10 @@ export function BookDetailPage() {
       </div>
 
       {isAuthenticated ? (
-        // ReserveBookModal wired in Task 17
-        <Button disabled={book.availableCopies === 0} id="reserve-btn">
+        <Button
+          disabled={book.availableCopies === 0}
+          onClick={() => setReserveOpen(true)}
+        >
           {book.availableCopies === 0 ? 'Sin ejemplares disponibles' : 'Reservar'}
         </Button>
       ) : (
@@ -79,6 +84,12 @@ export function BookDetailPage() {
           Inicia sesión para reservar
         </Link>
       )}
+
+      <ReserveBookModal
+        open={reserveOpen}
+        onClose={() => setReserveOpen(false)}
+        book={book}
+      />
     </section>
   )
 }
