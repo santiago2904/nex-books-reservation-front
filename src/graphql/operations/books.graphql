@@ -1,0 +1,14 @@
+fragment BookCore on Book {
+  id title author isbn description totalCopies availableCopies createdAt updatedAt
+}
+
+query BooksList($available: Boolean) {
+  books(available: $available) { ...BookCore }
+}
+
+query BookById($id: ID!) {
+  book(id: $id) {
+    ...BookCore
+    copies { id code status }
+  }
+}
