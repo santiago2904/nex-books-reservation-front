@@ -12,3 +12,9 @@ query BookById($id: ID!) {
     copies { id code status }
   }
 }
+
+mutation CreateBook($input: CreateBookInput!) { createBook(input: $input) { ...BookCore } }
+mutation UpdateBook($id: ID!, $input: UpdateBookInput!) { updateBook(id: $id, input: $input) { ...BookCore } }
+mutation DeleteBook($id: ID!) { deleteBook(id: $id) }
+mutation AddBookCopy($bookId: ID!) { addBookCopy(bookId: $bookId) { id code status } }
+mutation RemoveBookCopy($copyId: ID!) { removeBookCopy(copyId: $copyId) }
