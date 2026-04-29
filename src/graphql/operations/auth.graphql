@@ -1,0 +1,17 @@
+query Me {
+  me { id name email role createdAt }
+}
+
+mutation Login($input: LoginInput!) {
+  login(input: $input) {
+    accessToken
+    user { id name email role createdAt }
+  }
+}
+
+mutation Register($input: RegisterInput!) {
+  register(input: $input) {
+    accessToken
+    user { id name email role createdAt }
+  }
+}
