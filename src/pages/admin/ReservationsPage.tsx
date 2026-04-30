@@ -1,4 +1,15 @@
-import { useState, useDeferredValue } from 'react'
+import { useState, useEffect, useRef } from 'react'
+
+function useDebounce<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (timer.current) clearTimeout(timer.current)
+    timer.current = setTimeout(() => setDebounced(value), delay)
+    return () => { if (timer.current) clearTimeout(timer.current) }
+  }, [value, delay])
+  return debounced
+}
 import { gql } from '@apollo/client'
 import { useQuery } from '@apollo/client/react'
 import { format } from 'date-fns'
@@ -125,13 +136,13 @@ export function ReservationsPage() {
   const [status, setStatus] = useState<ResStatus>('ALL')
   const [from, setFrom] = useState<Date | undefined>()
   const [to, setTo] = useState<Date | undefined>()
-  const deferredSearch = useDeferredValue(search)
+  const debouncedSearch = useDebounce(search, 1000)
 
   const filters = {
     ...(status !== 'ALL' ? { status } : {}),
     ...(from ? { from } : {}),
     ...(to ? { to } : {}),
-    ...(deferredSearch ? { search: deferredSearch } : {}),
+    ...(debouncedSearch ? { search: debouncedSearch } : {}),
   }
 
   const { data, previousData, loading, error, refetch } = useQuery<{ allReservations: Reservation[] }>(
