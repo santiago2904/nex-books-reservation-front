@@ -10,7 +10,7 @@ import { Button, Input, Label, Card, Skeleton } from '@/components/ui'
 import { useToast } from '@/components/ui/Toaster'
 import { mapErrorToMessage, extractErrorCode } from '@/lib/errors'
 
-const BOOK = gql`query BookById($id: ID!) { book(id: $id) { id title author isbn description copies { id code status } } }`
+const BOOK = gql`query BookById($id: ID!) { book(id: $id) { id title author isbn description coverUrl copies { id code status } } }`
 const CREATE = gql`mutation CreateBook($input: CreateBookInput!) { createBook(input: $input) { id title } }`
 const UPDATE = gql`mutation UpdateBook($id: ID!, $input: UpdateBookInput!) { updateBook(id: $id, input: $input) { id title } }`
 const ADD_COPY = gql`mutation AddBookCopy($bookId: ID!) { addBookCopy(bookId: $bookId) { id code status } }`
@@ -21,6 +21,7 @@ const schema = z.object({
   author: z.string().min(1, 'Requerido'),
   isbn: z.string().optional().or(z.literal('')),
   description: z.string().optional().or(z.literal('')),
+  coverUrl: z.string().url('URL inválida').optional().or(z.literal('')),
   initialCopies: z.coerce.number().int().min(1, 'Mínimo 1').optional(),
 })
 type Form = z.infer<typeof schema>
@@ -45,18 +46,18 @@ export function BookFormPage() {
 
   useEffect(() => {
     if (data?.book) {
-      reset({ title: data.book.title, author: data.book.author, isbn: data.book.isbn ?? '', description: data.book.description ?? '' })
+      reset({ title: data.book.title, author: data.book.author, isbn: data.book.isbn ?? '', description: data.book.description ?? '', coverUrl: (data.book as { coverUrl?: string | null }).coverUrl ?? '' })
     }
   }, [data, reset])
 
   const onSubmit = async (form: Form) => {
     try {
       if (isEdit) {
-        const res = await update({ variables: { id, input: { title: form.title, author: form.author, isbn: form.isbn || null, description: form.description || null } } })
+        const res = await update({ variables: { id, input: { title: form.title, author: form.author, isbn: form.isbn || null, description: form.description || null, coverUrl: form.coverUrl || null } } })
         if (res.error) { toast.push('error', mapErrorToMessage(extractErrorCode(res.error))); return }
         toast.push('success', 'Libro actualizado')
       } else {
-        const res = await create({ variables: { input: { title: form.title, author: form.author, isbn: form.isbn || null, description: form.description || null, initialCopies: form.initialCopies ?? 1 } } })
+        const res = await create({ variables: { input: { title: form.title, author: form.author, isbn: form.isbn || null, description: form.description || null, coverUrl: form.coverUrl || null, initialCopies: form.initialCopies ?? 1 } } })
         if (res.error) { toast.push('error', mapErrorToMessage(extractErrorCode(res.error))); return }
         const newId = (res.data as { createBook: { id: string } }).createBook.id
         toast.push('success', 'Libro creado')
@@ -106,6 +107,11 @@ export function BookFormPage() {
         <div>
           <Label htmlFor="description">Descripción <span className="text-fg/50">(opcional)</span></Label>
           <Input id="description" {...register('description')} />
+        </div>
+        <div>
+          <Label htmlFor="coverUrl">URL de portada <span className="text-fg/50">(opcional — https://...)</span></Label>
+          <Input id="coverUrl" type="url" placeholder="https://ejemplo.com/portada.jpg" error={!!errors.coverUrl} {...register('coverUrl')} />
+          {errors.coverUrl && <p className="text-sm text-destructive mt-1">{errors.coverUrl.message}</p>}
         </div>
         {!isEdit && (
           <div>

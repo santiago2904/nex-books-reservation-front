@@ -11,7 +11,7 @@ const MY = gql`
   query MyReservations($filters: ReservationFiltersInput) {
     myReservations(filters: $filters) {
       id status reservedAt dueDate returnedAt
-      bookCopy { id code book { id title author isbn } }
+      bookCopy { id code book { id title author isbn coverUrl } }
     }
   }
 `
@@ -22,7 +22,7 @@ interface Reservation {
   reservedAt: string
   dueDate: string
   returnedAt: string | null
-  bookCopy: { id: string; code: string; book: { id: string; title: string; author: string; isbn?: string | null } }
+  bookCopy: { id: string; code: string; book: { id: string; title: string; author: string; isbn?: string | null; coverUrl?: string | null } }
 }
 
 function ReservationSkeleton() {

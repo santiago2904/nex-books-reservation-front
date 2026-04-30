@@ -10,7 +10,7 @@ import { useAuth } from '@/auth/useAuth'
 const BOOK_BY_ID = gql`
   query BookById($id: ID!) {
     book(id: $id) {
-      id title author isbn description
+      id title author isbn description coverUrl
       totalCopies availableCopies
       copies { id code status }
     }
@@ -23,6 +23,7 @@ interface BookDetail {
   author: string
   isbn?: string | null
   description?: string | null
+  coverUrl?: string | null
   totalCopies: number
   availableCopies: number
   copies: { id: string; code: string; status: string }[]
@@ -32,11 +33,14 @@ function getInitials(title: string) {
   return title.split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('')
 }
 
-function BookCover({ isbn, title }: { isbn?: string | null; title: string }) {
+function BookCover({ coverUrl: propCoverUrl, isbn, title }: { coverUrl?: string | null; isbn?: string | null; title: string }) {
   const [imgError, setImgError] = useState(false)
-  const coverUrl = isbn && !imgError
-    ? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`
-    : null
+  // Priority: backend coverUrl → Open Library via isbn → initials
+  const coverUrl = (propCoverUrl && !imgError)
+    ? propCoverUrl
+    : (isbn && !imgError)
+      ? `https://covers.openlibrary.org/b/isbn/${isbn}-L.jpg`
+      : null
 
   if (coverUrl) {
     return (
@@ -139,7 +143,7 @@ export function BookDetailPage() {
 
           {/* cover */}
           <div className="relative aspect-[2/3] sm:aspect-auto sm:min-h-[320px] bg-slate-100 overflow-hidden">
-            <BookCover isbn={book.isbn} title={book.title} />
+            <BookCover coverUrl={book.coverUrl} isbn={book.isbn} title={book.title} />
             {/* warm overlay at bottom */}
             <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/20 to-transparent sm:hidden" />
           </div>

@@ -11,14 +11,19 @@ interface Reservation {
   returnedAt: string | null
   bookCopy: {
     code: string
-    book: { id: string; title: string; author: string; isbn?: string | null }
+    book: { id: string; title: string; author: string; isbn?: string | null; coverUrl?: string | null }
   }
 }
 
-function MiniCover({ isbn, title }: { isbn?: string | null; title: string }) {
+function MiniCover({ coverUrl, isbn, title }: { coverUrl?: string | null; isbn?: string | null; title: string }) {
   const [err, setErr] = useState(false)
   const initials = title.split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('')
-  const src = isbn && !err ? `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg` : null
+  // Priority: backend coverUrl → Open Library via isbn → initials
+  const src = (coverUrl && !err)
+    ? coverUrl
+    : (isbn && !err)
+      ? `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg`
+      : null
 
   if (src) {
     return (
@@ -63,7 +68,7 @@ export function ReservationRow({
         {/* cover thumbnail */}
         <div className="w-16 shrink-0 bg-slate-100 overflow-hidden">
           <div className="h-full min-h-[96px]">
-            <MiniCover isbn={r.bookCopy.book.isbn} title={r.bookCopy.book.title} />
+            <MiniCover coverUrl={r.bookCopy.book.coverUrl} isbn={r.bookCopy.book.isbn} title={r.bookCopy.book.title} />
           </div>
         </div>
 

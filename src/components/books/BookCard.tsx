@@ -8,15 +8,19 @@ interface BookSummary {
   title: string
   author: string
   isbn?: string | null
+  coverUrl?: string | null
   availableCopies: number
   totalCopies: number
 }
 
-function CoverImage({ isbn, title }: { isbn?: string | null; title: string }) {
+function CoverImage({ coverUrl, isbn, title }: { coverUrl?: string | null; isbn?: string | null; title: string }) {
   const [imgError, setImgError] = useState(false)
-  const src = isbn && !imgError
-    ? `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg`
-    : null
+  // Priority: backend coverUrl → Open Library via isbn → initials
+  const src = (coverUrl && !imgError)
+    ? coverUrl
+    : (isbn && !imgError)
+      ? `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg`
+      : null
 
   const initials = title.split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('')
 
@@ -78,7 +82,7 @@ export function BookCard({ book }: { book: BookSummary }) {
       >
         {/* cover */}
         <div className="relative aspect-[2/3] overflow-hidden bg-slate-50">
-          <CoverImage isbn={book.isbn} title={book.title} />
+          <CoverImage coverUrl={book.coverUrl} isbn={book.isbn} title={book.title} />
           {unavailable && (
             <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
               <span className="text-xs font-medium text-fg/50 bg-white/80 px-2 py-1 rounded">

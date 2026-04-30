@@ -1,5 +1,5 @@
 fragment BookCore on Book {
-  id title author isbn description totalCopies availableCopies createdAt updatedAt
+  id title author isbn description coverUrl totalCopies availableCopies createdAt updatedAt
 }
 
 query BooksList($available: Boolean) {

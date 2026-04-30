@@ -6,7 +6,7 @@ import { EmptyState, Button } from '@/components/ui'
 
 const BOOKS_LIST = gql`
   query BooksList {
-    books { id title author isbn totalCopies availableCopies }
+    books { id title author isbn coverUrl totalCopies availableCopies }
   }
 `
 
@@ -15,6 +15,7 @@ interface Book {
   title: string
   author: string
   isbn?: string | null
+  coverUrl?: string | null
   totalCopies: number
   availableCopies: number
 }

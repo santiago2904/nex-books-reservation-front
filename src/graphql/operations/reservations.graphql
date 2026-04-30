@@ -1,6 +1,6 @@
 fragment ReservationCore on Reservation {
   id reservedAt dueDate returnedAt status
-  bookCopy { id code status book { id title author } }
+  bookCopy { id code status book { id title author isbn coverUrl } }
   user { id name email }
 }
 
