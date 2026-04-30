@@ -34,27 +34,27 @@ export function Modal({ open, onClose, title, children, footer }: Props) {
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
       onClick={onClose}
     >
       <div
         ref={ref}
         onClick={(e) => e.stopPropagation()}
-        className="bg-surface rounded-lg shadow-lg w-full max-w-md max-h-[90vh] overflow-auto"
+        className="bg-surface rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-auto border border-border/50"
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-          <h2 className="text-lg font-medium">{title}</h2>
+        <div className="flex items-center justify-between px-6 py-5 border-b border-border">
+          <h2 className="font-serif text-xl font-semibold text-fg leading-tight">{title}</h2>
           <button
             aria-label="Cerrar"
             onClick={onClose}
-            className="p-1 rounded hover:bg-muted focus:outline focus:outline-2 focus:outline-ring"
+            className="p-1.5 rounded-lg hover:bg-muted transition-colors focus:outline focus:outline-2 focus:outline-ring"
           >
-            <X aria-hidden className="w-5 h-5" />
+            <X aria-hidden className="w-4 h-4 text-fg/50" />
           </button>
         </div>
-        <div className="px-6 py-4">{children}</div>
+        <div className="px-6 py-5">{children}</div>
         {footer && (
-          <div className="px-6 py-4 border-t border-border flex justify-end gap-2">
+          <div className="px-6 py-4 border-t border-border flex justify-end gap-2 bg-muted/30 rounded-b-2xl">
             {footer}
           </div>
         )}

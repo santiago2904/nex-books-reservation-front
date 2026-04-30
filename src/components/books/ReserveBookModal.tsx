@@ -5,11 +5,11 @@ import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { gql } from '@apollo/client'
 import { useMutation } from '@apollo/client/react'
-import { Modal, Button, Input, Label } from '@/components/ui'
+import { Calendar, BookOpen } from 'lucide-react'
+import { Modal, Button, Label } from '@/components/ui'
 import { useToast } from '@/components/ui/Toaster'
 import { newIdempotencyKey } from '@/lib/idempotency'
 import { mapErrorToMessage, extractErrorCode } from '@/lib/errors'
-import { AvailabilityBadge } from './AvailabilityBadge'
 
 const CREATE = gql`
   mutation CreateReservation($input: CreateReservationInput!) {
@@ -18,25 +18,63 @@ const CREATE = gql`
 `
 
 const tomorrow = () => {
-  const d = new Date()
-  d.setDate(d.getDate() + 1)
-  return d.toISOString().slice(0, 10)
+  const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10)
 }
 const max90 = () => {
-  const d = new Date()
-  d.setDate(d.getDate() + 90)
-  return d.toISOString().slice(0, 10)
+  const d = new Date(); d.setDate(d.getDate() + 90); return d.toISOString().slice(0, 10)
 }
 
 const schema = z.object({
-  dueDate: z.string().refine((v) => new Date(v) > new Date(), 'Debe ser futura'),
+  dueDate: z.string().refine((v) => new Date(v) > new Date(), 'La fecha debe ser posterior a hoy'),
 })
 type Form = z.infer<typeof schema>
 
 interface Props {
   open: boolean
   onClose: () => void
-  book: { id: string; title: string; author: string; availableCopies: number; totalCopies: number }
+  book: {
+    id: string
+    title: string
+    author: string
+    isbn?: string | null
+    coverUrl?: string | null
+    availableCopies: number
+    totalCopies: number
+  }
+}
+
+function MiniCover({ coverUrl, isbn, title }: { coverUrl?: string | null; isbn?: string | null; title: string }) {
+  const [err, setErr] = useState(false)
+  const initials = title.split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('')
+  const src = (coverUrl && !err) ? coverUrl : (isbn && !err) ? `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg` : null
+
+  if (src) {
+    return <img src={src} alt="" onError={() => setErr(true)} loading="lazy" className="w-full h-full object-cover" />
+  }
+  return (
+    <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100">
+      <span className="text-xl font-serif font-semibold text-slate-300">{initials}</span>
+      <BookOpen aria-hidden className="w-5 h-5 text-slate-200 mt-1" />
+    </div>
+  )
+}
+
+function AvailDots({ available, total }: { available: number; total: number }) {
+  const capped = Math.min(total, 5)
+  return (
+    <div className="flex items-center gap-1.5">
+      {Array.from({ length: capped }).map((_, i) => (
+        <span
+          key={i}
+          className={`w-2 h-2 rounded-full ${i < available ? 'bg-emerald-500' : 'bg-slate-200'}`}
+          aria-hidden
+        />
+      ))}
+      <span className="ml-1 text-xs text-fg/50">
+        {available === 0 ? 'Sin stock' : available === total ? `${total} disponibles` : `${available} de ${total}`}
+      </span>
+    </div>
+  )
 }
 
 export function ReserveBookModal({ open, onClose, book }: Props) {
@@ -53,27 +91,18 @@ export function ReserveBookModal({ open, onClose, book }: Props) {
     setSubmitErr(null)
     try {
       const res = await create({
-        variables: {
-          input: {
-            bookId: book.id,
-            dueDate: new Date(data.dueDate).toISOString(),
-            idempotencyKey: idem,
-          },
-        },
+        variables: { input: { bookId: book.id, dueDate: new Date(data.dueDate).toISOString(), idempotencyKey: idem } },
       })
       if (res.error) {
         const msg = mapErrorToMessage(extractErrorCode(res.error))
-        setSubmitErr(msg)
-        toast.push('error', msg)
-        return
+        setSubmitErr(msg); toast.push('error', msg); return
       }
       toast.push('success', 'Reserva creada')
       onClose()
       nav('/my-reservations')
     } catch (e) {
       const msg = mapErrorToMessage(extractErrorCode(e))
-      setSubmitErr(msg)
-      toast.push('error', msg)
+      setSubmitErr(msg); toast.push('error', msg)
     }
   }
 
@@ -81,36 +110,73 @@ export function ReserveBookModal({ open, onClose, book }: Props) {
     <Modal
       open={open}
       onClose={onClose}
-      title={`Reservar "${book.title}"`}
+      title="Reservar libro"
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-          <Button form="reserve-form" type="submit" loading={isSubmitting}>Confirmar reserva</Button>
+          <Button form="reserve-form" type="submit" loading={isSubmitting}>
+            Confirmar reserva
+          </Button>
         </>
       }
     >
-      <p className="text-sm text-fg/70 mb-3">{book.author}</p>
-      <div className="mb-4">
-        <AvailabilityBadge available={book.availableCopies} total={book.totalCopies} />
+      {/* book preview */}
+      <div className="flex gap-4 mb-6 p-4 bg-muted/40 rounded-xl">
+        <div className="w-14 h-20 rounded-lg overflow-hidden bg-slate-100 shrink-0 shadow-sm">
+          <MiniCover coverUrl={book.coverUrl} isbn={book.isbn} title={book.title} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-serif font-semibold text-fg leading-tight mb-0.5 line-clamp-2">{book.title}</p>
+          <p className="text-xs text-fg/50 mb-3">{book.author}</p>
+          <AvailDots available={book.availableCopies} total={book.totalCopies} />
+        </div>
       </div>
+
+      {/* date form */}
       <form id="reserve-form" onSubmit={handleSubmit(onSubmit)} noValidate>
-        <Label htmlFor="dueDate">Fecha de devolución</Label>
-        <Input
-          id="dueDate"
-          data-autofocus
-          type="date"
-          min={tomorrow()}
-          max={max90()}
-          error={!!errors.dueDate}
-          aria-invalid={!!errors.dueDate}
-          aria-describedby={errors.dueDate ? 'due-err' : 'due-help'}
-          {...register('dueDate')}
-        />
-        {errors.dueDate
-          ? <p id="due-err" className="text-sm text-destructive mt-1">{errors.dueDate.message}</p>
-          : <p id="due-help" className="text-sm text-fg/60 mt-1">Hasta 90 días desde hoy.</p>
-        }
-        {submitErr && <p role="alert" className="text-sm text-destructive mt-2">{submitErr}</p>}
+        <Label htmlFor="dueDate" className="text-sm font-medium text-fg/70 mb-2 block">
+          ¿Hasta cuándo necesitas el libro?
+        </Label>
+
+        {/* styled date picker */}
+        <div className="relative">
+          <input
+            id="dueDate"
+            data-autofocus
+            type="date"
+            min={tomorrow()}
+            max={max90()}
+            aria-invalid={!!errors.dueDate}
+            aria-describedby={errors.dueDate ? 'due-err' : 'due-help'}
+            className={`
+              w-full px-4 py-3 rounded-xl border bg-surface text-fg text-sm
+              focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-ring
+              [color-scheme:light]
+              ${errors.dueDate ? 'border-destructive' : 'border-border'}
+            `}
+            {...register('dueDate')}
+          />
+          <Calendar
+            aria-hidden
+            className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-fg/30 pointer-events-none"
+          />
+        </div>
+
+        {errors.dueDate ? (
+          <p id="due-err" className="text-xs text-destructive mt-1.5 flex items-center gap-1">
+            {errors.dueDate.message}
+          </p>
+        ) : (
+          <p id="due-help" className="text-xs text-fg/40 mt-1.5">
+            Máximo 90 días desde hoy · {max90().split('-').reverse().join('/')}
+          </p>
+        )}
+
+        {submitErr && (
+          <p role="alert" className="text-sm text-destructive mt-3 p-3 bg-destructive/5 rounded-lg">
+            {submitErr}
+          </p>
+        )}
       </form>
     </Modal>
   )
