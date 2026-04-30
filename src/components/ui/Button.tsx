@@ -9,7 +9,7 @@ interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const styles: Record<Variant, string> = {
-  primary: 'bg-primary text-on-primary hover:opacity-90',
+  primary: 'bg-fg text-surface hover:bg-fg/90',
   secondary: 'bg-muted text-fg hover:bg-border',
   ghost: 'bg-transparent text-fg hover:bg-muted',
   destructive: 'bg-destructive text-white hover:opacity-90',
