@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react'
 import { gql } from '@apollo/client'
 import { useQuery } from '@apollo/client/react'
-import { Search, BookOpen, SlidersHorizontal } from 'lucide-react'
+import { Search, BookOpen } from 'lucide-react'
 import { BookCard, BookCardSkeleton } from '@/components/books/BookCard'
 import { EmptyState, Button } from '@/components/ui'
+import { Select } from '@/components/ui/Select'
 
 const BOOKS_LIST = gql`
   query BooksList {
@@ -113,20 +114,12 @@ export function BooksListPage() {
             </button>
 
             {/* sort */}
-            <div className="flex items-center gap-1.5">
-              <SlidersHorizontal aria-hidden className="w-4 h-4 text-fg/30" />
-              <select
-                value={sort}
-                onChange={(e) => setSort(e.target.value as SortOption)}
-                aria-label="Ordenar por"
-                className="text-sm text-fg/70 bg-surface border border-border rounded-xl px-3 py-2.5
-                  focus:outline focus:outline-2 focus:outline-ring cursor-pointer"
-              >
-                {(Object.keys(SORT_LABELS) as SortOption[]).map((k) => (
-                  <option key={k} value={k}>Ordenar: {SORT_LABELS[k]}</option>
-                ))}
-              </select>
-            </div>
+            <Select
+              value={sort}
+              onChange={(v) => setSort(v as SortOption)}
+              prefix="Ordenar:"
+              options={(Object.keys(SORT_LABELS) as SortOption[]).map((k) => ({ value: k, label: SORT_LABELS[k] }))}
+            />
 
             {/* clear */}
             {hasFilters && (
