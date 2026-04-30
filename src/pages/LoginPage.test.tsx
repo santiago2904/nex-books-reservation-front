@@ -51,7 +51,7 @@ describe('LoginPage', () => {
     renderLogin()
     await userEvent.type(screen.getByLabelText(/correo/i), 'ana@example.com')
     await userEvent.type(screen.getByLabelText(/contraseña/i), 'Pass1234!')
-    await userEvent.click(screen.getByRole('button', { name: /entrar/i }))
+    await userEvent.click(screen.getByRole('button', { name: /iniciar sesión/i }))
     expect(await screen.findByRole('alert')).toHaveTextContent(/credenciales/i)
   })
 
@@ -60,6 +60,6 @@ describe('LoginPage', () => {
     renderLogin()
     expect(screen.getByLabelText(/correo/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/contraseña/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /entrar/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /iniciar sesión/i })).toBeInTheDocument()
   })
 })

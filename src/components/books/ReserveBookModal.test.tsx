@@ -19,6 +19,19 @@ vi.mock('@apollo/client', async (importOriginal) => {
   return { ...actual }
 })
 
+// Mock DatePicker as a plain date input so tests can interact with it
+vi.mock('@/components/ui/DatePicker', () => ({
+  DatePicker: ({ value, onChange, id }: { value?: Date; onChange: (d: Date) => void; id?: string }) => (
+    <input
+      id={id}
+      type="date"
+      aria-label="Fecha de devolución"
+      value={value ? value.toISOString().slice(0, 10) : ''}
+      onChange={(e) => e.target.value && onChange(new Date(e.target.value + 'T12:00:00'))}
+    />
+  ),
+}))
+
 const book = { id: 'b1', title: 'Sapiens', author: 'Harari', availableCopies: 2, totalCopies: 3 }
 
 function renderModal(onClose = vi.fn()) {
@@ -42,7 +55,7 @@ describe('ReserveBookModal', () => {
     renderModal()
 
     const tomorrow = new Date(Date.now() + 86_400_000).toISOString().slice(0, 10)
-    await userEvent.type(screen.getByLabelText(/devolución/i), tomorrow)
+    await userEvent.type(screen.getByLabelText(/fecha de devolución/i), tomorrow)
     await userEvent.click(screen.getByRole('button', { name: /confirmar/i }))
 
     expect(mockMutate).toHaveBeenCalledOnce()
@@ -52,9 +65,10 @@ describe('ReserveBookModal', () => {
     expect(input.idempotencyKey).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
   })
 
-  it('shows available copies via AvailabilityBadge', () => {
+  it('shows available copies count', () => {
     mockMutate.mockResolvedValue({ data: null })
     renderModal()
-    expect(screen.getByText(/2 de 3 disponibles/i)).toBeInTheDocument()
+    // AvailDots renders "2 de 3" for available < total
+    expect(screen.getByText(/2 de 3/i)).toBeInTheDocument()
   })
 })
