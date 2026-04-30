@@ -134,11 +134,14 @@ export function ReservationsPage() {
     ...(deferredSearch ? { search: deferredSearch } : {}),
   }
 
-  const { data, loading, error, refetch } = useQuery<{ allReservations: Reservation[] }>(
-    ALL_RESERVATIONS, { variables: { filters } }
+  const { data, previousData, loading, error, refetch } = useQuery<{ allReservations: Reservation[] }>(
+    ALL_RESERVATIONS, { variables: { filters }, notifyOnNetworkStatusChange: false }
   )
 
-  const reservations = data?.allReservations ?? []
+  // Keep showing previous results while new search loads — avoids skeleton flash on every keystroke
+  const reservations = (data ?? previousData)?.allReservations ?? []
+  const isFirstLoad = loading && !previousData && !data
+  const isRefetching = loading && (!!previousData || !!data)
   const active = reservations.filter((r) => r.status === 'ACTIVE').length
   const returned = reservations.filter((r) => r.status !== 'ACTIVE').length
 
@@ -146,8 +149,13 @@ export function ReservationsPage() {
     <section>
       {/* header */}
       <div className="mb-6">
-        <h1 className="text-4xl font-serif font-semibold mb-1">Reservas</h1>
-        {!loading && !error && (
+        <div className="flex items-center gap-3">
+          <h1 className="text-4xl font-serif font-semibold">Reservas</h1>
+          {isRefetching && (
+            <div className="w-4 h-4 rounded-full border-2 border-fg/20 border-t-fg/60 animate-spin" aria-label="Cargando" />
+          )}
+        </div>
+        {!isFirstLoad && !error && (
           <p className="text-fg/50 text-sm">
             {reservations.length} resultado{reservations.length !== 1 ? 's' : ''}
             {status === 'ALL' && reservations.length > 0 && ` · ${active} activa${active !== 1 ? 's' : ''} · ${returned} devuelta${returned !== 1 ? 's' : ''}`}
@@ -217,7 +225,8 @@ export function ReservationsPage() {
       </div>
 
       {/* results */}
-      {loading && !data && (
+      {/* Only show skeleton on first load, not on every search refetch */}
+      {isFirstLoad && (
         <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <RowSkeleton key={i} />)}</div>
       )}
 
@@ -228,7 +237,7 @@ export function ReservationsPage() {
         </div>
       )}
 
-      {!loading && !error && reservations.length === 0 && (
+      {!isFirstLoad && !error && reservations.length === 0 && !isRefetching && (
         <div className="bg-surface rounded-xl border border-border p-12 flex flex-col items-center text-center gap-3">
           <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center">
             <BookOpen aria-hidden className="w-7 h-7 text-fg/30" />
@@ -241,7 +250,7 @@ export function ReservationsPage() {
       )}
 
       {reservations.length > 0 && (
-        <div className="space-y-3">
+        <div className={`space-y-3 transition-opacity duration-150 ${isRefetching ? 'opacity-60' : 'opacity-100'}`}>
           {reservations.map((r) => <AdminReservationRow key={r.id} r={r} />)}
         </div>
       )}
