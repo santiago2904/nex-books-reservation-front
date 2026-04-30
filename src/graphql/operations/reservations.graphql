@@ -1,0 +1,25 @@
+fragment ReservationCore on Reservation {
+  id reservedAt dueDate returnedAt status
+  bookCopy { id code status book { id title author isbn coverUrl } }
+  user { id name email }
+}
+
+mutation CreateReservation($input: CreateReservationInput!) {
+  createReservation(input: $input) { ...ReservationCore }
+}
+
+mutation ReturnBook($id: ID!) {
+  returnBook(reservationId: $id) { ...ReservationCore }
+}
+
+query MyReservations($filters: ReservationFiltersInput) {
+  myReservations(filters: $filters) { ...ReservationCore }
+}
+
+query ReservationsByBook($bookId: ID!, $filters: ReservationFiltersInput) {
+  reservationsByBook(bookId: $bookId, filters: $filters) { ...ReservationCore }
+}
+
+query ReservationsByUser($userId: ID!, $filters: ReservationFiltersInput) {
+  reservationsByUser(userId: $userId, filters: $filters) { ...ReservationCore }
+}
