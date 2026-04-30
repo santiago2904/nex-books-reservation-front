@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useForm } from 'react-hook-form'
+import { useForm, useController } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { gql } from '@apollo/client'
 import { useMutation } from '@apollo/client/react'
-import { Calendar, BookOpen } from 'lucide-react'
+import { BookOpen } from 'lucide-react'
 import { Modal, Button, Label } from '@/components/ui'
+import { DatePicker } from '@/components/ui/DatePicker'
 import { useToast } from '@/components/ui/Toaster'
 import { newIdempotencyKey } from '@/lib/idempotency'
 import { mapErrorToMessage, extractErrorCode } from '@/lib/errors'
@@ -17,15 +18,12 @@ const CREATE = gql`
   }
 `
 
-const tomorrow = () => {
-  const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10)
-}
-const max90 = () => {
-  const d = new Date(); d.setDate(d.getDate() + 90); return d.toISOString().slice(0, 10)
-}
+const tomorrow = () => { const d = new Date(); d.setDate(d.getDate() + 1); return d }
+const max90 = () => { const d = new Date(); d.setDate(d.getDate() + 90); return d }
 
 const schema = z.object({
-  dueDate: z.string().refine((v) => new Date(v) > new Date(), 'La fecha debe ser posterior a hoy'),
+  dueDate: z.date({ error: 'Selecciona una fecha de devolución' })
+    .refine((d) => d > new Date(), 'La fecha debe ser posterior a hoy'),
 })
 type Form = z.infer<typeof schema>
 
@@ -47,10 +45,7 @@ function MiniCover({ coverUrl, isbn, title }: { coverUrl?: string | null; isbn?:
   const [err, setErr] = useState(false)
   const initials = title.split(' ').slice(0, 2).map((w) => w[0]?.toUpperCase() ?? '').join('')
   const src = (coverUrl && !err) ? coverUrl : (isbn && !err) ? `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg` : null
-
-  if (src) {
-    return <img src={src} alt="" onError={() => setErr(true)} loading="lazy" className="w-full h-full object-cover" />
-  }
+  if (src) return <img src={src} alt="" onError={() => setErr(true)} loading="lazy" className="w-full h-full object-cover" />
   return (
     <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100">
       <span className="text-xl font-serif font-semibold text-slate-300">{initials}</span>
@@ -60,15 +55,10 @@ function MiniCover({ coverUrl, isbn, title }: { coverUrl?: string | null; isbn?:
 }
 
 function AvailDots({ available, total }: { available: number; total: number }) {
-  const capped = Math.min(total, 5)
   return (
     <div className="flex items-center gap-1.5">
-      {Array.from({ length: capped }).map((_, i) => (
-        <span
-          key={i}
-          className={`w-2 h-2 rounded-full ${i < available ? 'bg-emerald-500' : 'bg-slate-200'}`}
-          aria-hidden
-        />
+      {Array.from({ length: Math.min(total, 5) }).map((_, i) => (
+        <span key={i} className={`w-2 h-2 rounded-full ${i < available ? 'bg-emerald-500' : 'bg-slate-200'}`} aria-hidden />
       ))}
       <span className="ml-1 text-xs text-fg/50">
         {available === 0 ? 'Sin stock' : available === total ? `${total} disponibles` : `${available} de ${total}`}
@@ -79,9 +69,10 @@ function AvailDots({ available, total }: { available: number; total: number }) {
 
 export function ReserveBookModal({ open, onClose, book }: Props) {
   const idem = useMemo(newIdempotencyKey, [open])
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<Form>({
+  const { handleSubmit, control, formState: { errors, isSubmitting } } = useForm<Form>({
     resolver: zodResolver(schema),
   })
+  const { field } = useController({ name: 'dueDate', control })
   const [create] = useMutation(CREATE)
   const toast = useToast()
   const nav = useNavigate()
@@ -91,7 +82,7 @@ export function ReserveBookModal({ open, onClose, book }: Props) {
     setSubmitErr(null)
     try {
       const res = await create({
-        variables: { input: { bookId: book.id, dueDate: new Date(data.dueDate).toISOString(), idempotencyKey: idem } },
+        variables: { input: { bookId: book.id, dueDate: data.dueDate.toISOString(), idempotencyKey: idem } },
       })
       if (res.error) {
         const msg = mapErrorToMessage(extractErrorCode(res.error))
@@ -114,9 +105,7 @@ export function ReserveBookModal({ open, onClose, book }: Props) {
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-          <Button form="reserve-form" type="submit" loading={isSubmitting}>
-            Confirmar reserva
-          </Button>
+          <Button form="reserve-form" type="submit" loading={isSubmitting}>Confirmar reserva</Button>
         </>
       }
     >
@@ -132,46 +121,26 @@ export function ReserveBookModal({ open, onClose, book }: Props) {
         </div>
       </div>
 
-      {/* date form */}
+      {/* date picker */}
       <form id="reserve-form" onSubmit={handleSubmit(onSubmit)} noValidate>
-        <Label htmlFor="dueDate" className="text-sm font-medium text-fg/70 mb-2 block">
-          ¿Hasta cuándo necesitas el libro?
+        <Label htmlFor="dueDate-trigger" className="text-sm font-medium text-fg/70 mb-2 block">
+          Fecha de devolución
         </Label>
-
-        {/* styled date picker */}
-        <div className="relative">
-          <input
-            id="dueDate"
-            data-autofocus
-            type="date"
-            min={tomorrow()}
-            max={max90()}
-            aria-invalid={!!errors.dueDate}
-            aria-describedby={errors.dueDate ? 'due-err' : 'due-help'}
-            className={`
-              w-full px-4 py-3 rounded-xl border bg-surface text-fg text-sm
-              focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-ring
-              [color-scheme:light]
-              ${errors.dueDate ? 'border-destructive' : 'border-border'}
-            `}
-            {...register('dueDate')}
-          />
-          <Calendar
-            aria-hidden
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-fg/30 pointer-events-none"
-          />
-        </div>
-
-        {errors.dueDate ? (
-          <p id="due-err" className="text-xs text-destructive mt-1.5 flex items-center gap-1">
-            {errors.dueDate.message}
-          </p>
-        ) : (
-          <p id="due-help" className="text-xs text-fg/40 mt-1.5">
-            Máximo 90 días desde hoy · {max90().split('-').reverse().join('/')}
-          </p>
-        )}
-
+        <DatePicker
+          id="dueDate-trigger"
+          value={field.value instanceof Date ? field.value : undefined}
+          onChange={field.onChange}
+          min={tomorrow()}
+          max={max90()}
+          placeholder="Selecciona una fecha"
+          error={!!errors.dueDate}
+          aria-invalid={!!errors.dueDate}
+          aria-describedby={errors.dueDate ? 'due-err' : 'due-help'}
+        />
+        {errors.dueDate
+          ? <p id="due-err" className="text-xs text-destructive mt-1.5">{errors.dueDate.message}</p>
+          : <p id="due-help" className="text-xs text-fg/40 mt-1.5">Hasta 90 días desde hoy</p>
+        }
         {submitErr && (
           <p role="alert" className="text-sm text-destructive mt-3 p-3 bg-destructive/5 rounded-lg">
             {submitErr}
