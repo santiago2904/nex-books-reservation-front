@@ -33,7 +33,6 @@ const SORT_LABELS: Record<SortOption, string> = {
 export function BooksListPage() {
   const { loading, error, data, refetch } = useQuery<{ books: Book[] }>(BOOKS_LIST)
   const [search, setSearch] = useState('')
-  const [onlyAvailable, setOnlyAvailable] = useState(false)
   const [sort, setSort] = useState<SortOption>('title')
 
   const allBooks = data?.books ?? []
@@ -48,20 +47,16 @@ export function BooksListPage() {
       )
     }
 
-    if (onlyAvailable) {
-      result = result.filter((b) => b.availableCopies > 0)
-    }
-
     return [...result].sort((a, b) => {
       if (sort === 'title') return a.title.localeCompare(b.title)
       if (sort === 'author') return a.author.localeCompare(b.author)
       if (sort === 'availability') return b.availableCopies - a.availableCopies
       return 0
     })
-  }, [allBooks, search, onlyAvailable, sort])
+  }, [allBooks, search, sort])
 
-  const hasFilters = search || onlyAvailable || sort !== 'title'
-  const clearFilters = () => { setSearch(''); setOnlyAvailable(false); setSort('title') }
+  const hasFilters = !!search || sort !== 'title'
+  const clearFilters = () => { setSearch(''); setSort('title') }
 
   return (
     <section>
@@ -97,22 +92,6 @@ export function BooksListPage() {
 
           <div className="flex flex-wrap gap-2 items-center shrink-0">
             {/* availability toggle */}
-            <button
-              type="button"
-              onClick={() => setOnlyAvailable((v) => !v)}
-              className={`
-                inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-medium
-                border transition-colors cursor-pointer focus:outline focus:outline-2 focus:outline-ring
-                ${onlyAvailable
-                  ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
-                  : 'bg-surface border-border text-fg/60 hover:text-fg hover:border-fg/30'
-                }
-              `}
-            >
-              <span className={`w-2 h-2 rounded-full ${onlyAvailable ? 'bg-emerald-500' : 'bg-slate-300'}`} aria-hidden />
-              Solo disponibles
-            </button>
-
             {/* sort */}
             <Select
               value={sort}
