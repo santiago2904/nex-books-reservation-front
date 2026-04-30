@@ -1,7 +1,7 @@
 import { forwardRef, type ButtonHTMLAttributes } from 'react'
 import { Loader2 } from 'lucide-react'
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'destructive'
+type Variant = 'primary' | 'secondary' | 'ghost' | 'destructive' | 'dark'
 
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: Variant
@@ -13,6 +13,7 @@ const styles: Record<Variant, string> = {
   secondary: 'bg-muted text-fg hover:bg-border',
   ghost: 'bg-transparent text-fg hover:bg-muted',
   destructive: 'bg-destructive text-white hover:opacity-90',
+  dark: 'bg-fg text-surface hover:bg-fg/90',
 }
 
 export const Button = forwardRef<HTMLButtonElement, Props>(

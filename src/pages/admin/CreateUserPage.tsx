@@ -172,7 +172,7 @@ export function CreateUserPage() {
             </p>
           )}
 
-          <Button type="submit" loading={isSubmitting} className="w-full">
+          <Button type="submit" variant="dark" loading={isSubmitting} className="w-full">
             Crear usuario
           </Button>
         </form>
