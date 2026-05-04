@@ -2,7 +2,8 @@
 
 Aplicación web para gestionar reservas de libros de biblioteca. SPA construida con React 19, Vite, TypeScript, Tailwind CSS 4 y Apollo Client 4, consumiendo la API GraphQL del backend.
 
-> **Repo backend:** [`nex-books-reservation-back`](https://github.com/santiago2904/nex-books-reservation-back)
+> **Demo:** [https://nex-books-reservation-front.vercel.app](https://nex-books-reservation-front.vercel.app)
+> **Repo backend:** [`nex-books-reservation-back`](https://github.com/santiago2904/nex-books-reservation-back) · **API:** `https://d3uqn5vjvaiydr.cloudfront.net/graphql`
 
 ---
 
